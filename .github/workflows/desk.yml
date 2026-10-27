@@ -1,0 +1,79 @@
+# ORB Trade Desk on GitHub Pages: runs the trader-* skills on a schedule and publishes
+# the dashboard. Free on a public repository. It never places an order.
+#
+# Settings to make once (see HOSTING.md):
+#   Settings > Pages > Source: GitHub Actions
+#   Settings > Secrets and variables > Actions
+#     Secret   SEC_USER_AGENT  "Your Name you@email.com"   (optional, for 8-K filings)
+#     Variable SYMBOLS         TSLA,NVDA,AMD,AAPL,META      (the names to scan)
+#     Variable PICK            TSLA                          (optional: the chart you picked)
+name: ORB Trade Desk
+
+on:
+  schedule:
+    # Every 10 minutes, Monday to Friday, 13:00-21:59 UTC. That covers the whole
+    # New York session in daylight time and standard time. GitHub can start runs late.
+    - cron: "*/10 13-21 * * 1-5"
+  workflow_dispatch: {}   # the "Run workflow" button, for a rebuild right now
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: orb-trade-desk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # trader/state remembers which news and alerts were already shown, and today's trades
+      - name: Restore trader state
+        uses: actions/cache/restore@v4
+        with:
+          path: trader
+          key: trader-${{ github.run_id }}
+          restore-keys: trader-
+
+      - name: Use your limits from config.json
+        run: |
+          mkdir -p trader site
+          cp config.json trader/config.json
+
+      - name: Run the skills and build the page
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          SYMBOLS: ${{ vars.SYMBOLS }}
+          PICK: ${{ vars.PICK }}
+        run: |
+          SYMS="${SYMBOLS:-TSLA,NVDA,AMD,AAPL,META,MSFT,AMZN,GOOGL,PLTR,NFLX}"
+          ARGS=(--skills skills --out site/index.html --symbols "$SYMS")
+          if [ -n "$PICK" ]; then ARGS+=(--symbol "$PICK"); fi
+          python3 desk/run_desk.py "${ARGS[@]}" || echo "run_desk.py exited with an error; publishing what was built"
+          test -f site/index.html
+
+      - name: Save trader state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: trader
+          key: trader-${{ github.run_id }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

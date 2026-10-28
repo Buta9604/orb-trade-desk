@@ -171,6 +171,7 @@ def build(args):
     if args.bars_until:
         bars = drop_closed_only(bars, "0000-00-00 " + args.bars_until)
     data["bars"] = bars
+    data["refresh_sec"] = args.refresh
 
     blob = json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
     with open(TEMPLATE, encoding="utf-8") as f:
@@ -178,8 +179,10 @@ def build(args):
     if args.full_document:
         head = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">'
         html = head + html + "</body></html>"
-    with open(args.out, "w", encoding="utf-8") as f:
+    tmp = args.out + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
         f.write(html)
+    os.replace(tmp, args.out)  # atomic: a browser never reads a half-written page
     return data
 
 
@@ -197,6 +200,7 @@ def main(argv=None):
     ap.add_argument("--fragment", dest="full_document", action="store_false",
                     help="write the page without <html>/<head> (for publishing as a claude.ai artifact)")
     ap.add_argument("--open", action="store_true", help="open it in your browser")
+    ap.add_argument("--refresh", type=int, help="reload the page in the browser every N seconds")
     args = ap.parse_args(argv)
     d = build(args)
     n = sum(1 for k in ("watchlist", "entry", "plan", "timemachine", "risk") if d.get(k))

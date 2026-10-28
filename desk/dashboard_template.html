@@ -295,6 +295,7 @@ var sym = (plan && plan.symbol) || (entry && entry.symbol) || D.symbol || null;
   if (D.mode === "replay") c.appendChild(h("span", {class:"chip replay", text:"Replay · recorded data"}));
   else c.appendChild(h("span", {class:"chip", text:"Live data · Yahoo (delayed)"}));
   c.appendChild(h("span", {class:"chip", text:"Built " + (D.built_at || "")}));
+  if (D.refresh_sec && D.mode !== "replay") c.appendChild(h("span", {class:"chip", text:"Auto-refresh " + Math.round(D.refresh_sec/60) + " min"}));
 })();
 
 /* ---------- pipeline rail ---------- */
@@ -692,6 +693,7 @@ if (D.mode === "replay") $("foot").appendChild(h("p", {style:"margin:0", text:"T
 $("foot").appendChild(h("p", {style:"margin:0", text:"Not financial advice. Most people who day trade lose money. This page cannot place an order; nothing reaches a broker without trader-risk's PASS, your typed yes and Claude's Allow once card."}));
 
 drawSession(); drawTM(); drawScan();
+if (D.refresh_sec && D.mode !== "replay" && location.protocol.indexOf("http") === 0) setTimeout(function(){ location.reload(); }, D.refresh_sec * 1000);
 var rz; window.addEventListener("resize", function(){ clearTimeout(rz); rz = setTimeout(function(){ hideTip(); }, 100); });
 })();
 </script>

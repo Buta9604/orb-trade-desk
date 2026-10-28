@@ -17,6 +17,24 @@ setup.sh     installs the skills for Claude Code (Mac / Linux)
 setup.bat    same, for Windows
 ```
 
+## Run it on your laptop with live data (easiest)
+
+1. Install Python 3 if you don't have it: python.org/downloads (Windows: tick
+   "Add python.exe to PATH" in the installer).
+2. Unzip this folder somewhere you keep it, like Documents.
+3. Double-click **Start ORB Trade Desk.command** (Mac) or **Start ORB Trade Desk.bat**
+   (Windows). The dashboard opens at **http://localhost:8787**.
+   - Mac, the first time only: if it says it can't be opened, right-click the file >
+     Open > Open.
+   - Windows, the first time only: if SmartScreen appears, click More info > Run anyway.
+4. Leave that window open. While the market is open it rebuilds every 5 minutes (every
+   30 minutes when it is closed) and the page reloads by itself. Close the window to stop.
+
+Change what it watches in **desk-settings.json** (created on first start): `symbols`
+(tickers to scan), `pick` (the chart you picked, for the full plan, sizing and risk
+check), `every_minutes`. Your money limits are in **trader/config.json**. Restart the
+desk after editing either file. Only your own computer can open localhost:8787.
+
 ## 1. One-time setup
 
 1. Install Python 3.8 or newer (python.org). Nothing to pip install.

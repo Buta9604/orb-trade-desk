@@ -165,7 +165,8 @@ def one_pass(args, skills):
 
     with open(os.path.join("trader", "desk", "log.json"), "w", encoding="utf-8") as f:
         json.dump(log, f, indent=1)
-    BD.main(["--trader", "trader", "--out", args.out] + (["--symbol", sym] if sym else []))
+    extra = ["--refresh", str(args.refresh)] if getattr(args, "refresh", None) else []
+    BD.main(["--trader", "trader", "--out", args.out] + (["--symbol", sym] if sym else []) + extra)
     print("\nNothing was placed. To trade a READY ticket, ask Claude: /trader-broker (paper by default).")
 
 
